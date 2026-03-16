@@ -66,7 +66,45 @@ class MinimaxAgent(MultiAgentSearchAgent):
         - Return the ACTION (not the value) that maximizes the minimax value for the drone.
         """
         # TODO: Implement your code here
-        return None
+        agentes = state.get_num_agents()
+        acciones = state.get_legal_actions(self.index)
+
+        def minmax_algoritmo(state, depth, agent):
+
+            if state.is_win() or state.is_lose() or depth == 0:
+                return self.evaluation_function(state)
+            
+            siguiente = (agent + 1) % agentes
+            if siguiente == 0:
+                depth_siguiente = depth-1
+            else:
+                depth_siguiente = depth 
+                
+            lista_puntajes = []
+            for accion in state.get_legal_actions(agent):
+                sucesor = state.generate_successor(agent, accion)
+                puntaje = minmax_algoritmo(sucesor, depth_siguiente, siguiente)
+                lista_puntajes.append(puntaje)
+
+            if agent == 0:
+                return max(lista_puntajes)
+            else:
+                return min(lista_puntajes)
+            
+
+        mejor_accion = None
+        mejor_puntaje = -1000000000000
+
+        for accion in acciones:
+            sucesor = state.generate_successor(self.index, accion)
+            puntaje = minmax_algoritmo(sucesor, self.depth, 1)
+
+            if puntaje > mejor_puntaje:
+                mejor_accion = accion
+                mejor_puntaje = puntaje
+                    
+        return mejor_accion
+            
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -91,7 +129,69 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         - Pass alpha and beta through the recursive calls.
         """
         # TODO: Implement your code here (BONUS)
-        return None
+        agentes = state.get_num_agents()
+        acciones = state.get_legal_actions(self.index)
+
+        def alphabeta_algoritmo(state, depth, agent, alpha, beta):
+
+            if state.is_win() or state.is_lose() or depth == 0:
+                return self.evaluation_function(state)
+            
+            siguiente = (agent + 1) % agentes
+            if siguiente == 0:
+                depth_siguiente = depth-1
+            else:
+                depth_siguiente = depth 
+
+            if agent == 0:
+
+                valor = -1000000000000
+                for accion in state.get_legal_actions(agent):
+                    sucesor = state.generate_successor(agent, accion)
+                    puntaje = alphabeta_algoritmo(sucesor, depth_siguiente, siguiente, alpha, beta)
+                    
+                    valor = max(valor, puntaje)
+
+                    if valor > beta:
+                        return valor
+                    alpha = max (alpha, valor)
+
+                return valor
+            
+            else:
+
+                valor = 1000000000000
+
+                for accion in state.get_legal_actions(agent):
+                    sucesor = state.generate_successor(agent, accion)
+                    puntaje = alphabeta_algoritmo(sucesor, depth_siguiente, siguiente, alpha, beta)
+
+                    valor = min(valor, puntaje)
+
+                    if valor < alpha:
+                        return valor
+                    
+                    beta = min(beta, valor)
+
+                return valor
+
+        alpha = -1000000000000
+        beta = 1000000000000
+
+        mejor_accion = None
+        mejor_puntaje = -1000000000000
+
+        for accion in acciones:
+            sucesor = state.generate_successor(self.index, accion)
+            puntaje = alphabeta_algoritmo(sucesor, self.depth, 1, alpha, beta)
+
+            if puntaje > mejor_puntaje:
+                mejor_accion = accion
+                mejor_puntaje = puntaje
+
+            alpha = max(alpha, mejor_puntaje)
+                    
+        return mejor_accion
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
