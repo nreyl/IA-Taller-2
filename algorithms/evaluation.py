@@ -42,4 +42,31 @@ def evaluation_function(state: GameState) -> float:
     - A good evaluation function balances delivery progress with hunter avoidance.
     """
     # TODO: Implement your code here
-    return 0.0
+    from algorithms.utils import bfs_distance
+
+    if state.is_win():
+        return 1000
+    if state.is_lose():
+        return -1000
+    
+    dron = state.get_drone_position()
+    cazadores = state.get_hunter_positions()
+    entregas = state.get_pending_deliveries()
+    puntaje = state.get_score()
+    layout = state.get_layout()
+
+    if entregas:
+        distancias = []
+        for i in entregas:
+            distancias.append(bfs_distance(layout, dron, i, False))
+        puntaje -= min(distancias)
+    
+    if cazadores:
+        distancias = []
+        for j in cazadores:
+            distancias.append(bfs_distance(layout, j, dron, True))
+        puntaje += min(distancias)
+
+    puntaje -= 10*len(entregas)
+    
+    return puntaje
