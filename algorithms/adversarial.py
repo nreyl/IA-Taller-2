@@ -66,7 +66,45 @@ class MinimaxAgent(MultiAgentSearchAgent):
         - Return the ACTION (not the value) that maximizes the minimax value for the drone.
         """
         # TODO: Implement your code here
-        return None
+        agentes = state.get_num_agents()
+        acciones = state.get_legal_actions(self.index)
+
+        def minmax_algoritmo(state, depth, agent):
+
+            if state.is_win() or state.is_lose() or depth == 0:
+                return self.evaluation_function(state)
+            
+            siguiente = (agent + 1) % agentes
+            if siguiente == 0:
+                depth_siguiente = depth-1
+            else:
+                depth_siguiente = depth 
+                
+            lista_puntajes = []
+            for accion in state.get_legal_actions(agent):
+                sucesor = state.generate_successor(agent, accion)
+                puntaje = minmax_algoritmo(sucesor, depth_siguiente, siguiente)
+                lista_puntajes.append(puntaje)
+
+            if agent == 0:
+                return max(lista_puntajes)
+            else:
+                return min(lista_puntajes)
+            
+
+        mejor_accion = None
+        mejor_puntaje = -1000000000000
+
+        for accion in acciones:
+            sucesor = state.generate_successor(self.index, accion)
+            puntaje = minmax_algoritmo(sucesor, self.depth, 1)
+
+            if puntaje > mejor_puntaje:
+                mejor_accion = accion
+                mejor_puntaje = puntaje
+                    
+        return mejor_accion
+            
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
