@@ -67,6 +67,6 @@ def evaluation_function(state: GameState) -> float:
             distancias.append(bfs_distance(layout, j, dron, True))
         puntaje += min(distancias)
 
-    puntaje -= 10*len(entregas)
+    puntaje -= len(entregas)
     
     return puntaje
