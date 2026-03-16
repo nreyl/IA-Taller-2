@@ -136,8 +136,143 @@ def backtracking_ac3(csp: DroneAssignmentCSP) -> dict[str, str] | None:
       - an ac3 function that manages the queue of arcs to check and calls revise.
       - a backtrack function that integrates AC-3 into the search process.
     """
-    # TODO: Implement your code here
-    return None
+
+        
+    def backtrack(assignment: dict[str, str]) -> dict[str, str] | None:
+        
+        if csp.is_complete(assignment):
+            return assignment
+
+        variables_sin_asignar = csp.get_unassigned_variables(assignment)
+        var = variables_sin_asignar[0]
+
+        for valor in csp.domains[var][:]:   
+            
+            conteo["asignaciones"] += 1
+            
+            if csp.is_consistent(var, valor, assignment):
+                
+                csp.assign(var, valor, assignment)
+
+                removals_log = []
+                
+                queue = []
+                for vecino in csp.get_neighbors(var):
+                    if vecino not in assignment:
+                        queue.append((vecino, var))
+
+
+                consistente = ac3(queue, assignment, removals_log)
+
+                if consistente:
+                    resultado = backtrack(assignment)
+                    if resultado is not None:
+                        return resultado
+
+                while removals_log:
+                    v, val = removals_log.pop()
+                    if val not in csp.domains[v]:
+                         csp.domains[v].append(val)
+                         
+                csp.unassign(var, assignment)
+                conteo["backtracks"] += 1
+
+        return None
+
+
+    def values_compatible(Xi, x, Xj, y, assignment):
+        
+        was_assigned_Xi = Xi in assignment
+        was_assigned_Xj = Xj in assignment
+        
+        old_Xi = assignment.get(Xi)
+        old_Xj = assignment.get(Xj)
+        
+        csp.assign(Xi, x, assignment)
+        csp.assign(Xj, y, assignment)
+        
+        compatible = (
+            csp.is_consistent(Xi, x, assignment)
+            and
+            csp.is_consistent(Xj, y, assignment)
+        )
+        
+        if was_assigned_Xi:
+            assignment[Xi] = old_Xi
+        else:
+            del assignment[Xi]
+        
+        if was_assigned_Xj:
+            assignment[Xj] = old_Xj
+        else:
+            del assignment[Xj]
+        
+        return compatible
+
+
+    def revise(Xi, Xj, assignment, removals_log:list):
+        
+        revised = False
+        
+        for x in csp.domains[Xi][:]:
+            
+            supported = False
+            
+            for y in csp.domains[Xj]:
+                
+                if values_compatible(Xi, x, Xj, y, assignment):
+                    supported = True
+                    break
+            
+            if not supported:
+                csp.domains[Xi].remove(x)
+                removals_log.append((Xi, x))
+                revised = True
+        
+        return revised
+    
+    def ac3(queue:list, assignment, removals):
+
+        while queue:
+
+            Xi, Xj = queue.pop(0)
+
+            if revise(Xi, Xj, assignment, removals):
+
+                conteo["revisions"]+=1
+                
+                if len(csp.domains[Xi]) == 0:
+                    return False
+
+                for i in csp.get_neighbors(Xi):
+                    if i != Xj:
+                        queue.append((i, Xi))
+
+        return True
+    
+        
+    conteo = {
+    "asignaciones": 0,
+    "backtracks": 0,
+    "revisions": 0
+    }
+    
+    
+    queue = []
+    for Xi in csp.domains:
+        for Xj in csp.get_neighbors(Xi):
+            queue.append((Xi,Xj))
+    if not ac3(queue,{}, []):
+        return None
+    solucion = backtrack({})
+    print(f"[backtracking_AC3] asignaciones intentadas: {conteo['asignaciones']}, backtracks: {conteo['backtracks']}, revisions: {conteo['revisions']}")
+    return solucion
+
+
+    
+    
+
+
 
 
 def backtracking_mrv_lcv(csp: DroneAssignmentCSP) -> dict[str, str] | None:
